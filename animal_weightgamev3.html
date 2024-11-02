@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>動物の重さ順タップゲーム</title>
+<style>
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+    #game-container-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #game-container {
+        display: grid;
+        grid-template-columns: repeat(4, 80px);
+        grid-gap: 10px;
+        width: 360px;
+    }
+    .animal-button {
+        width: 80px;
+        height: 80px;
+        font-size: 18px;
+        text-align: center;
+        line-height: 80px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px #666;
+        transition: all 0.1s ease;
+    }
+    .animal-button:active {
+        box-shadow: 0 2px #666;
+        transform: translateY(2px);
+    }
+    .clicked {
+        background-color: gray;
+        box-shadow: none;
+        cursor: default;
+        opacity: 0.6;
+    }
+    .small-font {
+        font-size: 14px; /* 4文字以上の動物のフォントサイズ */
+    }
+    #message {
+        margin-top: 20px;
+        font-size: 18px;
+        text-align: center;
+        width: 100%;
+    }
+    .error {
+        color: red;
+        font-weight: bold;
+    }
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+</style>
+</head>
+<body>
+<div id="game-container-wrapper">
+    <div id="game-container"></div>
+    <div id="message">スタートボタンを押して開始してください</div>
+    <div class="button-group">
+        <button onclick="startGame()">スタート</button>
+        <button onclick="giveUp()">諦める</button>
+    </div>
+</div>
+
+<script>
+// 32種類の動物の名前（ひらがな）と重さデータ
+const animals = [
+    { name: "ねこ", weight: 4 },
+    { name: "いぬ", weight: 10 },
+    { name: "うさぎ", weight: 2 },
+    { name: "ねずみ", weight: 0.02 },
+    { name: "ぞう", weight: 6000 },
+    { name: "きりん", weight: 800 },
+    { name: "くま", weight: 300 },
+    { name: "とら", weight: 220 },
+    { name: "らいおん", weight: 190 },
+    { name: "かめ", weight: 1.5 },
+    { name: "さる", weight: 30 },
+    { name: "ぶた", weight: 70 },
+    { name: "しか", weight: 150 },
+    { name: "うし", weight: 700 },
+    { name: "ひつじ", weight: 80 },
+    { name: "やぎ", weight: 60 },
+    { name: "あひる", weight: 3 },
+    { name: "かえる", weight: 0.5 },
+    { name: "わに", weight: 500 },
+    { name: "へび", weight: 2 },
+    { name: "はと", weight: 0.3 },
+    { name: "ふくろう", weight: 1.2 },
+    { name: "とんぼ", weight: 0.001 },
+    { name: "つる", weight: 6 },
+    { name: "にわとり", weight: 2.5 },
+    { name: "ぺんぎん", weight: 30 },
+    { name: "たぬき", weight: 7 },
+    { name: "いるか", weight: 200 },
+    { name: "たこ", weight: 15 },
+    { name: "いか", weight: 10 },
+    { name: "かに", weight: 0.1 }
+];
+
+let gameAnimals = [];
+let currentWeightOrder = 1;
+let isPlaying = false;
+
+function startGame() {
+    // ゲームの初期化
+    gameAnimals = getRandomAnimals(16);
+    gameAnimals.sort((a, b) => a.weight - b.weight); // 重さの順にソート
+    currentWeightOrder = 1;
+    isPlaying = true;
+    document.getElementById("message").textContent = "軽い順に動物をタップしてください！";
+    renderButtons();
+}
+
+function getRandomAnimals(count) {
+    const shuffledAnimals = animals.sort(() => 0.5 - Math.random());
+    return shuffledAnimals.slice(0, count);
+}
+
+function renderButtons() {
+    const container = document.getElementById("game-container");
+    container.innerHTML = "";
+    // 配置順をランダムにするためにシャッフル
+    const shuffledGameAnimals = [...gameAnimals].sort(() => 0.5 - Math.random());
+    shuffledGameAnimals.forEach(animal => {
+        const button = document.createElement("button");
+        button.className = "animal-button";
+        button.textContent = animal.name; // ボタンにひらがなで名前を表示
+        // 名前が4文字以上の場合にフォントサイズを小さく
+        if (animal.name.length >= 4) {
+            button.classList.add("small-font");
+        }
+        button.onclick = () => checkAnimal(button, animal);
+        container.appendChild(button);
+    });
+}
+
+function checkAnimal(button, animal) {
+    if (!isPlaying) return;
+    const message = document.getElementById("message");
+    if (animal.weight === gameAnimals[currentWeightOrder - 1].weight) {
+        button.classList.add("clicked");
+        currentWeightOrder++;
+        message.textContent = "良い調子です！次の動物をタップしてください！";
+        if (currentWeightOrder > gameAnimals.length) {
+            endGame();
+        }
+    } else {
+        message.innerHTML = "<span class='error'>間違いです！もう一度軽い順を確認してください。</span>";
+    }
+}
+
+function endGame() {
+    isPlaying = false;
+    document.getElementById("message").textContent = "クリア！すべての動物を軽い順に並べました！";
+}
+
+function giveUp() {
+    if (!isPlaying) return;
+    isPlaying = false;
+    const message = document.getElementById("message");
+    // 正しい順序を表示
+    message.innerHTML = "<strong>正しい順序:</strong> " + gameAnimals.map(animal => animal.name).join(" → ");
+}
+
+</script>
+</body>
+</html>
